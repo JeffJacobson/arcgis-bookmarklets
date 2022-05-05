@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   /**
    * Adds "None" options (with value of an empty string)
    * to the select boxes (except for "f", which is a required parameter).
@@ -43,8 +43,34 @@
       r.parentElement.parentElement.append(newLabel);
     }
   }
+  
+  function makeWhereRequired() {
+    document.forms[0].where.required = true;
+  }
+  
+  /**
+   * Queries the feature layer for its field names.
+   * @returns {Promise<string[]>}
+   */
+  async function getFieldNames() {
+    const re = /^.+\/MapServer\/\d+\b/i;
+    const match = location.href.match(re);
+    if (!match) return;
+    
+    const excludedFieldTypes = /((OID)|(Geometry))$/ig;
+    
+    const url = new URL(match[0]);
+    url.searchParams.set("f", "json");
+    const result = await fetch(url);
+    const layer = await result.json();
+    const fields = layer.fields
+    	.filter(f => !excludedFieldTypes.test(f.type))
+    	.map(f => f.name);
+    console.log(fields);
+    return fields;
+  }
 
   addNoneOptionToSelects();
   addUnspecifiedRadioButtons();
-
+  getFieldNames().then(names => console.log(names.join(",")));
 })();
