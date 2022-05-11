@@ -1,6 +1,109 @@
-import { IField, ILayerDefinition } from "@esri/arcgis-rest-feature-service";
+import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet } from "@esri/arcgis-rest-feature-service";
 
+// Wrap all bookmarklet code in a self-executing anonymous 
+// function to avoid polluting the global scope.
 (async () => {
+  const responseTableClass = "response-table";
+
+  function getFieldByName(featureSet: IFeatureSet, fieldName: string): IField {
+    if (!featureSet.fields) {
+      throw new TypeError("Feature set does not contain a 'fields' property.");
+    }
+    return featureSet.fields.filter(f => f.name === fieldName)[0];
+  }
+
+  /**
+   * Enumerates through the fields of a feature set, yielding
+   * the objectIdFieldName, globalFieldName, and displayFieldName
+   * before the rest of the fields.
+   * @param featureSet A feature set
+   * @param specialFieldNameProperties Specifies the names of properties of featureSet 
+   * that denote special fields that should be yielded before the other fields.
+   */
+  function* enumerateFields(featureSet: IFeatureSet, specialFieldNameProperties = [
+    "objectIdFieldName",
+    "globalIdFieldName",
+    "displayFieldName"
+  ]) {
+    const fieldsToSkip = new Array<string>();
+    // Yield the "special" fields first.
+    for (const propertyName of specialFieldNameProperties) {
+      if (!(propertyName in featureSet)) continue;
+      const fieldName = (featureSet as any)[propertyName];
+      if (fieldName) {
+        const field = getFieldByName(featureSet, fieldName);
+        fieldsToSkip.push(field.name);
+        yield field;
+      }
+    }
+
+    const orderedFieldNames = Array.of(...fieldsToSkip);
+
+    // Yield the rest
+    const unyieldedFields = featureSet.fields?.filter(f => !(f.name in fieldsToSkip)) || [];
+    for (const field of unyieldedFields) {
+      orderedFieldNames.push(field.name);
+      yield field;
+    }
+    return orderedFieldNames;
+  }
+
+  // /**
+  //  * Get the field names from a feature's attributes.
+  //  * This can be used if a {@link IQueryFeaturesResponse}
+  //  * does not contain a {@link IQueryFeaturesResponse.fields} property.
+  //  * @param feature A feature
+  //  */
+  // function* getFieldNamesFromFeature(feature: IFeature) {
+  //   for (const attributeName in feature.attributes) {
+  //     yield attributeName;
+  //   }
+  // }
+
+  function createTableHeading(field: IField) {
+    const th = document.createElement("th");
+    th.scope = "col";
+    if (typeof field === "string") {
+      th.textContent = field;
+      th.dataset.fieldName = field;
+    } else {
+      th.textContent = field.alias || field.name;
+      th.dataset.fieldName = field.name;
+    }
+    return th;
+  }
+
+  function createTableCell(feature: IFeature, field: IField): HTMLTableCellElement {
+    const cell = document.createElement("td");
+    cell.textContent = feature.attributes[field.name];
+    return cell;
+  }
+
+  function createTable(queryResponse: IQueryFeaturesResponse) {
+    const table = document.createElement("table");
+    const frag = document.createDocumentFragment();
+    frag.append(table);
+    table.classList.add(responseTableClass);
+    const thead = table.createTHead();
+    const theadRow = thead.insertRow();
+    // Get an array of fields.
+    const fields = Array.from(enumerateFields(queryResponse));
+    // Append th elements for each field.
+    theadRow.append(...fields.map(createTableHeading));
+
+    const tbody = table.createTBody();
+    for (const feature of queryResponse.features) {
+      const row = tbody.insertRow();
+      for (const field of fields) {
+        const cell = createTableCell(feature, field);
+        row.appendChild(cell);
+      }
+    }
+
+    return frag;
+  }
+
+
   /**
    * Adds "None" options (with value of an empty string)
    * to the select boxes (except for "f", which is a required parameter).
@@ -200,30 +303,78 @@ import { IField, ILayerDefinition } from "@esri/arcgis-rest-feature-service";
     addResetButton();
 
     form.addEventListener("submit", function (this, ev) {
-      // Get all named elements with values and
-      // create a mapping of the controls' name/values.
-
+      // Determine which form submit button the user clicked (GET or POST).
       const submitButton = ev.submitter;
       const methodRe = /(?:(?:GET)|(?:POST))/gi;
       const methodMatch = submitButton?.getAttribute("value")?.match(methodRe);
-      this.method = methodMatch ? methodMatch[0] : "";
+      // Set the form method to match the button that was clicked.
+      // If the method isn't "GET" or "POST" (a situation which shouldn't occur)
+      // Set the method to an empty string.
+      this.method = methodMatch ? methodMatch[0].toLowerCase() : "";
+      // Change the form target so the query opens in a new window.
       this.target = "_blank";
 
-      // TODO: for GET requests, clean up the URL and open this URL rather than the default form submit behavior.
-      // const queryParameters = new URLSearchParams(
-      //   Array.from(
-      //   this.querySelectorAll<HTMLInputElement>("input[type=radio][checked],input:not([type=radio]),textarea"))
-      //   .filter(input => input.name && input.value !== "")
-      //   .map(input => [input.name, input.value])
-      // );
 
-      // // Create a new URL
-      // const url = new URL(location.href.split("?")[0]);
-      // // Add the parameters to the URL.
-      // url.search = queryParameters.toString();
-      // // Open the URL in a new window.
-      // open(url, "_blank");
-      // ev.preventDefault();
+      const format = (this.f as HTMLSelectElement).value;
+      if (format !== "html" || this.method !== "get") {
+        return;
+      }
+
+
+
+      // TODO: for GET requests, clean up the URL and open this URL rather than the default form submit behavior.
+
+      // Get all named elements with values and
+      // create a mapping of the controls' name/values.
+
+      const queryParameters = new URLSearchParams(
+        Array.from(
+          this.querySelectorAll<HTMLInputElement>("input[type=radio][checked],input:not([type=radio]),textarea"))
+          .filter(input => input.name && input.value !== "")
+          .map(input => [input.name, input.value])
+      );
+
+      // User has specified HTML output, but we need to get JSON and then we'll
+      // generate HTML ourselves.
+      queryParameters.set("f", "json");
+
+      // Create a new URL
+      const url = new URL(location.href.split("?")[0]);
+      // Add the parameters to the URL.
+      url.search = queryParameters.toString();
+
+      fetch(url.href).then(async (response) => {
+        const queryResponse: IQueryFeaturesResponse = await response.json();
+        try {
+          const tableFrag = createTable(queryResponse);
+          const selector = `table.${responseTableClass}`;
+          // Remove existing result tables if they exist.
+          document.body.querySelectorAll(selector).forEach(element => { element.remove() });
+          document.body.append(tableFrag);
+          document.body.querySelector(selector)?.scrollIntoView();
+          // Update the URL
+        } catch (error) {
+          if (error instanceof DOMException) {
+            console.error("An error occurred creating the table", error);
+          } else {
+            throw error;
+          }
+        }
+        try {
+          history.pushState({ url: url.href, response: queryResponse }, "", url);
+        } catch (error) {
+          if (error instanceof DOMException) {
+            console.error("Error pushing history state", error);
+          } else {
+            throw error;
+          }
+        }
+      }, error => {
+        alert("An error was encountered. See console for details.");
+        console.error(error);
+      });
+
+      ev.preventDefault();
     });
   }
 

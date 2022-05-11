@@ -1,9 +1,16 @@
 import { readFile, writeFile } from "fs/promises";
 import constants from "constants";
 
-let contents = await readFile("arcgis-layer-query-form-enhancements.js", {
+const readOnlyOptions = {
     encoding: "utf-8", flag: constants.O_RDONLY
-});
+};
+
+const writeOnlyOptions = {
+    encoding: "utf-8",
+    flag: constants.O_WRONLY
+};
+
+let contents = await readFile("arcgis-layer-query-form-enhancements.js", readOnlyOptions);
 
 // Remove the empty export statement.
 contents = contents.replace("export {};", "");
@@ -21,21 +28,16 @@ await writeFile(outputFilename, contents);
 
 await updateReadme(contents);
 
+
 /**
  * Updates the README.md file with the bookmarklet text.
  * @param {string} bookmarkletText The bookmarklet text to add to the README.md file.
  */
 async function updateReadme(bookmarkletText) {
-    let readmeTemplate = await readFile("README.template.md", {
-        encoding: "utf-8",
-        flag: constants.O_RDONLY
-    });
+    let readmeTemplate = await readFile("README.template.md", readOnlyOptions);
 
     const readme = readmeTemplate.replace("{{bookmarklets}}", `\`\`\`javascript\n${bookmarkletText}\n\`\`\``);
 
-    await writeFile("README.md", readme, {
-        encoding: "utf-8",
-        flag: constants.O_WRONLY
-    });
+    await writeFile("README.md", readme, writeOnlyOptions);
 }
 
