@@ -2,17 +2,15 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "typescript",
-			"tsconfig": "tsconfig.json",
-			"option": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
+			"type": "npm",
+			"script": "build",
 			"group": {
 				"kind": "build",
 				"isDefault": true
 			},
-			"label": "tsc: watch - tsconfig.json"
+			"problemMatcher": [],
+			"label": "npm: build",
+			"detail": "tsc && node build/build.mjs"
 		}
 	]
 }

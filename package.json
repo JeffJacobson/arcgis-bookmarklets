@@ -1,7 +1,7 @@
 {
   "name": "arcgis-bookmarklet",
   "version": "1.0.0",
-  "description": "",
+  "description": "Bookmarklet to enhance ArcGIS Server query page",
   "type": "module",
   "private": true,
   "main": "index.js",
@@ -11,14 +11,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gist.github.com/72cb27252afbd245632f835c93ff10d7.git"
+    "url": "git+https://github.com/JeffJacobson/arcgis-bookmarklets.git"
   },
+  "keywords": [
+    "arcgis",
+    "bookmarklet"
+  ],
   "author": "Jeff Jacobson",
   "license": "Unlicense",
   "bugs": {
-    "url": "https://gist.github.com/72cb27252afbd245632f835c93ff10d7"
+    "url": "https://github.com/JeffJacobson/arcgis-bookmarklets/issues"
   },
-  "homepage": "https://gist.github.com/72cb27252afbd245632f835c93ff10d7",
+  "homepage": "https://github.com/JeffJacobson/arcgis-bookmarklets#readme",
   "devDependencies": {
     "@esri/arcgis-rest-feature-service": "^4.0.2",
     "@esri/arcgis-rest-request": "^4.0.2",
