@@ -140,6 +140,12 @@ import { IField, ILayerDefinition } from "@esri/arcgis-rest-feature-service";
     }
   }
 
+  /**
+   * Uses the History API to clean up the URL currently displayed in the browser
+   * by removing all of the parameters that are set to an empty string.
+   * @param this HTML Anchor element that was clicked.
+   * @param e Click event
+   */
   function removeEmptyParametersFromUrl(this: HTMLAnchorElement, e: Event) {
     // Get the current URL.
     let url = new URL(location.href);
@@ -165,6 +171,11 @@ import { IField, ILayerDefinition } from "@esri/arcgis-rest-feature-service";
     e.preventDefault();
   }
 
+  /**
+   * Adds a link to the query page that will clean up the URL using
+   * the History API.
+   * @param form The form on the query page
+   */
   function addUrlCleanupLink(form: HTMLFormElement) {
     const link = document.createElement("a");
     link.href = "#";
@@ -198,12 +209,13 @@ import { IField, ILayerDefinition } from "@esri/arcgis-rest-feature-service";
       this.method = methodMatch ? methodMatch[0] : "";
       this.target = "_blank";
 
-      const queryParameters = new URLSearchParams(
-        Array.from(
-        this.querySelectorAll<HTMLInputElement>("input[type=radio][checked],input:not([type=radio]),textarea"))
-        .filter(input => input.name && input.value !== "")
-        .map(input => [input.name, input.value])
-      );
+      // TODO: for GET requests, clean up the URL and open this URL rather than the default form submit behavior.
+      // const queryParameters = new URLSearchParams(
+      //   Array.from(
+      //   this.querySelectorAll<HTMLInputElement>("input[type=radio][checked],input:not([type=radio]),textarea"))
+      //   .filter(input => input.name && input.value !== "")
+      //   .map(input => [input.name, input.value])
+      // );
 
       // // Create a new URL
       // const url = new URL(location.href.split("?")[0]);
