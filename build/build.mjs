@@ -14,4 +14,28 @@ contents = contents.replace(/\s{2,}/g, " ");
 
 contents = `javascript:${contents}`;
 
-await writeFile("output.js", contents);
+const outputFilename = "output.js";
+await writeFile(outputFilename, contents);
+
+// Update the README file
+
+await updateReadme(contents);
+
+/**
+ * Updates the README.md file with the bookmarklet text.
+ * @param {string} bookmarkletText The bookmarklet text to add to the README.md file.
+ */
+async function updateReadme(bookmarkletText) {
+    let readmeTemplate = await readFile("README.template.md", {
+        encoding: "utf-8",
+        flag: constants.O_RDONLY
+    });
+
+    const readme = readmeTemplate.replace("{{bookmarklets}}", `\`\`\`javascript\n${bookmarkletText}\n\`\`\``);
+
+    await writeFile("README.md", readme, {
+        encoding: "utf-8",
+        flag: constants.O_WRONLY
+    });
+}
+

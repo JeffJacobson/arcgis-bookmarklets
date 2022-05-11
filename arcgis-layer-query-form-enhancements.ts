@@ -140,7 +140,7 @@ import { IField, ILayerDefinition } from "@esri/arcgis-rest-feature-service";
     }
   }
 
-  function removeEmptyParametersFromUrl() {
+  function removeEmptyParametersFromUrl(this: HTMLAnchorElement, e: Event) {
     // Get the current URL.
     let url = new URL(location.href);
     // Get the names of params that are not empty or otherwise should not be removed.
@@ -161,16 +161,15 @@ import { IField, ILayerDefinition } from "@esri/arcgis-rest-feature-service";
     url = new URL(url.href.replace(/\?.+$/, ""));
     url.search = newSearchParams.toString()
     history.replaceState(null, "", url);
+
+    e.preventDefault();
   }
 
   function addUrlCleanupLink(form: HTMLFormElement) {
     const link = document.createElement("a");
     link.href = "#";
     link.text = "Cleanup URL";
-    link.addEventListener("click", removeEmptyParametersFromUrl, {
-      capture: false,
-      passive: true
-    });
+    link.addEventListener("click", removeEmptyParametersFromUrl);
     const p = document.createElement("p");
     p.append(link);
     form.prepend(p);
