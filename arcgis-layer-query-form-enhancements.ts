@@ -5,6 +5,102 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
 (async () => {
   const responseTableClass = "response-table";
 
+  const queryHelpUrl = "../../../../../../sdk/rest/index.html#/Query_Map_Service_Layer/02ss0000000r000000/";
+
+  let helpWindow: Window | null = null;
+
+  function scrollToSpan(node: ParentNode, paramName: string) {
+    // Get the spans containing parameter names and filter 
+    // to only the one with the desired parameter name.
+    console.group(`scroll to span with ${paramName}`)
+    try {
+      const spanList = node.querySelectorAll("td:first-child>span.usertext");
+      console.debug("matching spans", spanList);
+      const spans = Array.from(spanList).filter(e => e.textContent === paramName);
+      console.debug(`matching spans with ${paramName}`, spans);
+      if (spans.length > 0) {
+        // Get the parent element (table cell) of 
+        // the span with the parameter name.
+        // Scroll to this element.
+        spans[0].parentElement?.scrollIntoView();
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      console.groupEnd();
+    }
+  }
+
+  const helpMutationObserver = new MutationObserver((mutationRecords, observer) => {
+    console.group("Mutation Observed", observer);
+    try {
+      for (const record of mutationRecords) {
+        console.group("mutation record", record);
+        if (record.type === "childList") {
+          console.debug("added children to node", record.target, record.addedNodes);
+        }
+        console.groupEnd();
+      }
+    } finally {
+      console.groupEnd();
+    }
+  });
+
+  /**
+   * Opens a help window for a query parameter.
+   * @param this The <a> that was clicked.
+   * @param ev The click event.
+   */
+  function getHelpForParam(this: HTMLAnchorElement, ev: Event) {
+    console.group("get help for param")
+    try {
+      const paramName = this.dataset.param;
+      if (paramName) {
+        if (!helpWindow || helpWindow.closed) {
+          helpWindow = open(this.href, this.target);
+          helpWindow?.addEventListener("load", function (this, ev) {
+            helpMutationObserver.observe(helpWindow!.document, {
+              childList: true,
+              subtree: true,
+              attributes: false
+            });
+            console.group("help window load event listener");
+            console.debug("this", this);
+            console.debug("help window", helpWindow);
+            console.debug("Are the windows the same?", this === helpWindow);
+            console.debug("event", ev);
+            scrollToSpan(helpWindow!.document, paramName);
+            console.groupEnd();
+          }, { passive: true, capture: false });
+        } else {
+          scrollToSpan(helpWindow.document, paramName);
+          helpWindow.focus();
+        }
+        ev.preventDefault();
+      } else {
+        console.warn("could not access paramName");
+      }
+    } finally {
+      console.groupEnd();
+    }
+
+  }
+
+  function createHelpLinks(form: HTMLFormElement) {
+    const labels = form.querySelectorAll<HTMLLabelElement>("label[for]");
+    for (const label of labels) {
+      const paramName = label.htmlFor;
+      const a = document.createElement("a");
+      a.href = queryHelpUrl;
+      a.target = "help";
+      a.dataset.param = paramName;
+      a.text = "❓";
+      label.append(a);
+      a.addEventListener("click", getHelpForParam);
+    }
+  }
+
   function getFieldByName(featureSet: IFeatureSet, fieldName: string): IField {
     if (!featureSet.fields) {
       throw new TypeError("Feature set does not contain a 'fields' property.");
@@ -315,14 +411,12 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
       this.target = "_blank";
 
 
+      // for GET requests, clean up the URL and open this URL rather than the default form submit behavior.
+
       const format = (this.f as HTMLSelectElement).value;
       if (format !== "html" || this.method !== "get") {
         return;
       }
-
-
-
-      // TODO: for GET requests, clean up the URL and open this URL rather than the default form submit behavior.
 
       // Get all named elements with values and
       // create a mapping of the controls' name/values.
@@ -361,6 +455,8 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
           }
         }
         try {
+          // Set "f" back to "html" before pushing history state.
+          url.searchParams.set("f", "html");
           history.pushState({ url: url.href, response: queryResponse }, "", url);
         } catch (error) {
           if (error instanceof DOMException) {
@@ -380,6 +476,8 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
 
   const form = document.forms[0];
   if (!form.dataset.enhanced) {
+    (form.where as HTMLInputElement).placeholder = `Use "1=1" to query all records.`
+    createHelpLinks(form);
     console.debug("form", form);
     addUrlCleanupLink(form);
     addNoneOptionToSelects(form);
