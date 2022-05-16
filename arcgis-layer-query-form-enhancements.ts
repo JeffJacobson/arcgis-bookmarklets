@@ -5,7 +5,9 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
 (async () => {
   const responseTableClass = "response-table";
 
-  const queryHelpUrl = "../../../../../../sdk/rest/index.html#/Query_Map_Service_Layer/02ss0000000r000000/";
+  const helpRootUrl = "../../../../../../sdk/rest/index.html"
+
+  const mapServiceHelpUrl = `${helpRootUrl}#/Query_Map_Service_Layer/02ss0000000r000000/`;
 
   let helpWindow: Window | null = null;
 
@@ -141,7 +143,7 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
     function addEventHandler(label: HTMLElement) {
       const paramName = (label as HTMLLabelElement).htmlFor || label.dataset.htmlFor;
       const a = document.createElement("a");
-      a.href = queryHelpUrl;
+      a.href = mapServiceHelpUrl;
       a.target = "help";
       a.dataset.param = paramName;
       a.text = helpText;
