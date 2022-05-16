@@ -15,7 +15,12 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
     [3857, "WGS 84 / Pseudo-Mercator – Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI"]
   ]);
 
-  function createSROptionsDataList(srIds = srMap) {
+  /**
+   * Creates data list for inSR/outSR text box inputs.
+   * @param srIds A Map of WKID values and corresponding text descriptions.
+   * @returns An HTML datalist element.
+   */
+  function createSROptionsDataList(srIds: Map<number, string> = srMap) {
     const dataList = document.createElement("datalist");
     dataList.id = "srdatalist";
     const frag = document.createDocumentFragment();
@@ -29,11 +34,21 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
     return dataList;
   }
 
+  /**
+   * 
+   * @param form HTML form that to which the datalist will be added
+   * @param datalist Either an HTML datalist or its id value. 
+   * If omitted, a new datalist will be created.
+   * @param textboxIds The element IDs of the text boxes that will use the datalist.
+   */
   function addDataListToSRTextElements(form: HTMLFormElement,
     datalist?: string | HTMLDataListElement,
-    ids = ["inSR", "outSR"]) {
-    const qs = ids.map(id => `input[type=text][name='${id}']`).join(",");
+    textboxIds = ["inSR", "outSR"]) {
+    // Get the textboxes matching the given ids.
+    const qs = textboxIds.map(id => `input[type=text][name='${id}']`).join(",");
     const textBoxes = form.querySelectorAll<HTMLInputElement>(qs);
+
+    // Create the datalist if parameter wasn't provided.
     if (!datalist) {
       datalist = createSROptionsDataList();
       form.appendChild(datalist);
@@ -44,6 +59,12 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
     }
   }
 
+  /**
+   * 
+   * @param node The HTML Window that will be scrolled.
+   * @param paramName The name of the ArcGIS query 
+   * parameter to scroll to in the documentation.
+   */
   function scrollToSpan(node: ParentNode, paramName: string) {
     // Get the spans containing parameter names and filter 
     // to only the one with the desired parameter name.
@@ -67,73 +88,91 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
     }
   }
 
-  const helpMutationObserver = new MutationObserver((mutationRecords, observer) => {
-    console.group("Mutation Observed", observer);
-    try {
-      for (const record of mutationRecords) {
-        console.group("mutation record", record);
-        if (record.type === "childList") {
-          console.debug("added children to node", record.target, record.addedNodes);
-        }
-        console.groupEnd();
-      }
-    } finally {
-      console.groupEnd();
-    }
-  });
-
   /**
    * Opens a help window for a query parameter.
-   * @param this The <a> that was clicked.
-   * @param ev The click event.
+   * @param this The <a> that was clicked. 
+   * * The href will be a help page on the same server.
+   * * The dataset of the a element should contain a "param" (a "data-param" attribute).
+   * @param ev The click event. This function currently does not make use of this parameter.
    */
   function getHelpForParam(this: HTMLAnchorElement, ev: Event) {
     console.group("get help for param")
     try {
       const paramName = this.dataset.param;
       if (paramName) {
+        // Scroll to the given parameter's documentation in the help window.
+        // Open a new help window if necessary.
         if (!helpWindow || helpWindow.closed) {
           helpWindow = open(this.href, this.target);
+          // All of the content is not in the page when loaded.
+          // Wait for 1 second before attempting to scroll.
+          // (An alternative approach would be to use a MutationObserver.)
           helpWindow?.addEventListener("load", function (this, ev) {
-            helpMutationObserver.observe(helpWindow!.document, {
-              childList: true,
-              subtree: true,
-              attributes: false
-            });
-            console.group("help window load event listener");
-            console.debug("this", this);
-            console.debug("help window", helpWindow);
-            console.debug("Are the windows the same?", this === helpWindow);
-            console.debug("event", ev);
-            scrollToSpan(helpWindow!.document, paramName);
-            console.groupEnd();
+            this.setTimeout(() => scrollToSpan(helpWindow!.document, paramName), 1000);
           }, { passive: true, capture: false });
         } else {
+          // The window already exists, so we can scroll without waiting.
           scrollToSpan(helpWindow.document, paramName);
+          // Switch to the help window.
           helpWindow.focus();
         }
+        // Stop the default behavior of clicking a link.
         ev.preventDefault();
       } else {
         console.warn("could not access paramName");
       }
+    } catch (error) {
+      console.error(error);
+      throw error;
     } finally {
       console.groupEnd();
     }
 
   }
 
+  /**
+   * Creates help links for labels for query parameter inputs.
+   * @param form A form
+   */
   function createHelpLinks(form: HTMLFormElement) {
     const labels = form.querySelectorAll<HTMLLabelElement>("label[for]");
-    for (const label of labels) {
-      const paramName = label.htmlFor;
+    const helpText = "❓";
+
+    function addEventHandler(label: HTMLElement) {
+      const paramName = (label as HTMLLabelElement).htmlFor || label.dataset.htmlFor;
       const a = document.createElement("a");
       a.href = queryHelpUrl;
       a.target = "help";
       a.dataset.param = paramName;
-      a.text = "❓";
+      a.text = helpText;
       label.append(a);
       a.addEventListener("click", getHelpForParam);
     }
+
+    // TODO: Radio buttons currently aren't supported by this function, as
+    // they do not have labels with "for" attributes.
+
+    // Get the radio buttons that have a name element and are contained in a label
+    // that is the first child.
+    const selector = "td>label:first-child>input[type=radio][name]";
+    // Get the labels that will have a help link added to them.
+    const elements = Array.from(
+      form.querySelectorAll<HTMLInputElement>(selector), rb => {
+        const name = rb.name;
+        const cell = rb.parentElement?.parentElement?.previousElementSibling as HTMLElement;
+        cell.dataset.htmlFor = name;
+        return cell;
+      });
+
+    for (const label of elements) {
+      addEventHandler(label);
+    }
+
+    labels.forEach(addEventHandler);
+
+
+
+
   }
 
   function getFieldByName(featureSet: IFeatureSet, fieldName: string): IField {
@@ -447,67 +486,81 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
       this.target = "_blank";
 
 
-      // for GET requests, clean up the URL and open this URL rather than the default form submit behavior.
+      // // for GET requests, clean up the URL and open this URL rather than the default form submit behavior.
 
-      const format = (this.f as HTMLSelectElement).value;
-      if (format !== "html" || this.method !== "get") {
-        return;
-      }
+      // const format = (this.f as HTMLSelectElement).value;
+      // if (format !== "html" || this.method !== "get") {
+      //   return;
+      // }
 
-      // Get all named elements with values and
-      // create a mapping of the controls' name/values.
+      // // Get all named elements with values and
+      // // create a mapping of the controls' name/values.
 
-      const queryParameters = new URLSearchParams(
-        Array.from(
-          this.querySelectorAll<HTMLInputElement>("input[type=radio][checked],input:not([type=radio]),textarea"))
-          .filter(input => input.name && input.value !== "")
-          .map(input => [input.name, input.value])
-      );
+      // const queryParameters = new URLSearchParams(
+      //   Array.from(
+      //     this.querySelectorAll<HTMLInputElement>("input[type=radio][checked],input:not([type=radio]),textarea"))
+      //     .filter(input => input.name && input.value !== "")
+      //     .map(input => [input.name, input.value])
+      // );
 
-      // User has specified HTML output, but we need to get JSON and then we'll
-      // generate HTML ourselves.
-      queryParameters.set("f", "json");
+      // // User has specified HTML output, but we need to get JSON and then we'll
+      // // generate HTML ourselves.
+      // queryParameters.set("f", "json");
 
-      // Create a new URL
-      const url = new URL(location.href.split("?")[0]);
-      // Add the parameters to the URL.
-      url.search = queryParameters.toString();
+      // // Create a new URL
+      // const url = new URL(location.href.split("?")[0]);
+      // // Add the parameters to the URL.
+      // url.search = queryParameters.toString();
 
-      fetch(url.href).then(async (response) => {
-        const queryResponse: IQueryFeaturesResponse = await response.json();
-        try {
-          const tableFrag = createTable(queryResponse);
-          const selector = `table.${responseTableClass}`;
-          // Remove existing result tables if they exist.
-          document.body.querySelectorAll(selector).forEach(element => { element.remove() });
-          document.body.append(tableFrag);
-          document.body.querySelector(selector)?.scrollIntoView();
-          // Update the URL
-        } catch (error) {
-          if (error instanceof DOMException) {
-            console.error("An error occurred creating the table", error);
-          } else {
-            throw error;
-          }
-        }
-        try {
-          // Set "f" back to "html" before pushing history state.
-          url.searchParams.set("f", "html");
-          history.pushState({ url: url.href, response: queryResponse }, "", url);
-        } catch (error) {
-          if (error instanceof DOMException) {
-            console.error("Error pushing history state", error);
-          } else {
-            throw error;
-          }
-        }
-      }, error => {
-        alert("An error was encountered. See console for details.");
-        console.error(error);
-      });
+      // fetch(url.href).then(async (response) => {
+      //   const queryResponse: IQueryFeaturesResponse = await response.json();
+      //   try {
+      //     const tableFrag = createTable(queryResponse);
+      //     const selector = `table.${responseTableClass}`;
+      //     // Remove existing result tables if they exist.
+      //     document.body.querySelectorAll(selector).forEach(element => { element.remove() });
+      //     document.body.append(tableFrag);
+      //     document.body.querySelector(selector)?.scrollIntoView();
+      //     // Update the URL
+      //   } catch (error) {
+      //     if (error instanceof DOMException) {
+      //       console.error("An error occurred creating the table", error);
+      //     } else {
+      //       throw error;
+      //     }
+      //   }
+      //   try {
+      //     // Set "f" back to "html" before pushing history state.
+      //     url.searchParams.set("f", "html");
+      //     history.pushState({ url: url.href, response: queryResponse }, "", url);
+      //   } catch (error) {
+      //     if (error instanceof DOMException) {
+      //       console.error("Error pushing history state", error);
+      //     } else {
+      //       throw error;
+      //     }
+      //   }
+      // }, error => {
+      //   alert("An error was encountered. See console for details.");
+      //   console.error(error);
+      // });
 
-      ev.preventDefault();
+      // ev.preventDefault();
     });
+  }
+
+  /**
+   * Enhances the "time" control.
+   * @param form A form
+   * @returns Returns the time control (or null if it could not be found).
+   */
+  function enhanceTimeInput(form: HTMLFormElement) {
+    const re = /(\d+),\s*(\d+)/;
+    const timeInput = form.querySelector<HTMLInputElement>("input[name='time']");
+    if (timeInput) {
+      timeInput.pattern = re.source;
+    }
+    return timeInput;
   }
 
   const form = document.forms[0];
@@ -520,6 +573,7 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
     addNoneOptionToSelects(form);
     addUnspecifiedRadioButtons(form);
     modifyFormHandling(form);
+    enhanceTimeInput(form);
     getLayerInfo().then(layer => {
       if (!layer.fields) {
         throw new TypeError("Expected an layer to have an array of fields.");

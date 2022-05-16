@@ -2,6 +2,8 @@
 clipboardy
 epsg
 HARN
+srdatalist
 srid
 unyielded
+WKID
 WKIDs
