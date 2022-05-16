@@ -21,7 +21,6 @@ The following are ideas for enhancements that have not yet been implemented.
     * [4326]: "WGS 84 -- WGS84 - World Geodetic System 1984, used in GPS"
     * [3857]: "WGS 84 / Pseudo-Mercator -- Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI"
     * [2927]: "NAD83(HARN) / Washington South (ftUS)"
-  * [ ] Change `type` attribute to `"number"` (from `"text"`). (Double-check docs to make sure that only WKIDs are supported. If WKTs are also supported, then this change would not be desired.)
   * Make it easier for users to specify geometry parameters
     * [ ] Allow them to select a point using [epsg.io's "Get position on a map" feature](https://epsg.io/map#srs=2927), which supports various SRs.
   * [ ] Add [form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#validating_forms_using_javascript) using the [Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
