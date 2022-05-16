@@ -555,7 +555,7 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
    * @returns Returns the time control (or null if it could not be found).
    */
   function enhanceTimeInput(form: HTMLFormElement) {
-    const re = /(\d+),\s*(\d+)/;
+    const re = /(?<start>\d+)(?:,\s*(?<end>\d+))?/;
     const timeInput = form.querySelector<HTMLInputElement>("input[name='time']");
     if (timeInput) {
       timeInput.pattern = re.source;
