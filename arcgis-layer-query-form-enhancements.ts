@@ -9,6 +9,41 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
 
   let helpWindow: Window | null = null;
 
+  const srMap = new Map<number, string>([
+    [2927, "NAD83(HARN) / Washington South (ftUS)"],
+    [4326, "WGS 84 – WGS84 - World Geodetic System 1984, used in GPS"],
+    [3857, "WGS 84 / Pseudo-Mercator – Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI"]
+  ]);
+
+  function createSROptionsDataList(srIds = srMap) {
+    const dataList = document.createElement("datalist");
+    dataList.id = "srdatalist";
+    const frag = document.createDocumentFragment();
+    for (const [srid, desc] of srMap) {
+      const option = document.createElement("option");
+      option.value = srid.toString();
+      option.text = option.label = `${srid}: ${desc}`;
+      frag.appendChild(option);
+    }
+    dataList.appendChild(frag);
+    return dataList;
+  }
+
+  function addDataListToSRTextElements(form: HTMLFormElement,
+    datalist?: string | HTMLDataListElement,
+    ids = ["inSR", "outSR"]) {
+    const qs = ids.map(id => `input[type=text][name='${id}']`).join(",");
+    const textBoxes = form.querySelectorAll<HTMLInputElement>(qs);
+    if (!datalist) {
+      datalist = createSROptionsDataList();
+      form.appendChild(datalist);
+    }
+    const listId = typeof datalist === "string" ? datalist : datalist.id;
+    for (const tb of textBoxes) {
+      tb.setAttribute("list", listId);
+    }
+  }
+
   function scrollToSpan(node: ParentNode, paramName: string) {
     // Get the spans containing parameter names and filter 
     // to only the one with the desired parameter name.
@@ -206,15 +241,16 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
    */
   function addNoneOptionToSelects(form = document.forms[0]) {
     console.group("add 'none' option to selects");
-    const namesToSkip = ["f", "sqlFormat"].map(s => `[name='${s}']`).join(",")
+    const namesToSkip = ["f"].map(s => `[name='${s}']`).join(",")
     const selects = form.querySelectorAll(`select:not(${namesToSkip})`);
+    const labelText = "Unset";
 
     console.log("selects", selects);
     for (const s of selects) {
       const option = document.createElement("option");
       option.value = "";
-      option.label = "None";
-      option.textContent = "None";
+      option.label = labelText;
+      option.textContent = labelText;
       option.defaultSelected = true;
       s.appendChild(option);
       console.log("option added", option);
@@ -223,7 +259,7 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
   }
 
   /**
-   * Adds an additional "Undefined" radio button in addition to the true and false ones.
+   * Adds an additional "Unset" radio button in addition to the true and false ones.
    */
   function addUnspecifiedRadioButtons(form = document.forms[0]) {
     // Get all of the radio buttons with a value of "false" and do not
@@ -241,7 +277,7 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
       newRadio.defaultChecked = r.defaultChecked
 
       const newLabel = document.createElement("label");
-      newLabel.append(newRadio, document.createTextNode("Undefined"));
+      newLabel.append(newRadio, document.createTextNode("Unset"));
 
       if (r.parentElement && r.parentElement.parentElement) {
         r.parentElement.parentElement.append(newLabel);
@@ -477,6 +513,7 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
   const form = document.forms[0];
   if (!form.dataset.enhanced) {
     (form.where as HTMLInputElement).placeholder = `Use "1=1" to query all records.`
+    addDataListToSRTextElements(form);
     createHelpLinks(form);
     console.debug("form", form);
     addUrlCleanupLink(form);

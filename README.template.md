@@ -2,7 +2,7 @@
 
 <!-- 🚨⚠ WARNING: DO NOT EDIT THE README.md FILE. MAKE ALL CHANGES TO README.template.md, as README.md will be overwritten by an automated process. -->
 
-A bookmarklet that enhances the ArcGIS REST query page.
+A bookmarklet that enhances the ArcGIS REST query page with various quality-of-life changes.
 
 * Field names are now selected via a multi-option select element rather than requiring the user to type a comma-separated list of field names that they have to look up themselves.
 * Gives the user the option of not setting query parameters that they don't need.
@@ -11,21 +11,21 @@ A bookmarklet that enhances the ArcGIS REST query page.
 * Adds a link to the top of the page that will clean-up the URL by removing search parameters from the URL that have no value.
 * Submitting the form will now open the results in a new browser tab rather than replacing the current one.
 * Adds a reset button to the form.
+* Spatial Reference input changes (`outSR` and `inSR`)
+  * Adds suggestions to the text input via [datalist](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/datalist) elements. Includes the following options. (Descriptions come from <https://epsg.io>.)
+    * [4326]: "WGS 84 -- WGS84 - World Geodetic System 1984, used in GPS"
+    * [3857]: "WGS 84 / Pseudo-Mercator -- Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI"
+    * [2927]: "NAD83(HARN) / Washington South (ftUS)"
 
 ## Future ideas
 
 The following are ideas for enhancements that have not yet been implemented.
 
-* Spatial Reference input changes (`outSR` and `inSR`)
-  * [ ] Add suggestions to the text input via [datalist](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/datalist) elements. Should include the following options. (Descriptions come from <https://epsg.io>.)
-    * [4326]: "WGS 84 -- WGS84 - World Geodetic System 1984, used in GPS"
-    * [3857]: "WGS 84 / Pseudo-Mercator -- Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI"
-    * [2927]: "NAD83(HARN) / Washington South (ftUS)"
-  * Make it easier for users to specify geometry parameters
-    * [ ] Allow them to select a point using [epsg.io's "Get position on a map" feature](https://epsg.io/map#srs=2927), which supports various SRs.
-  * [ ] Add [form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#validating_forms_using_javascript) using the [Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
-    * We can't simply mark the `where` input control as required. While `where` is *usually* required for a query, but not *always*, depending on what other parameters the user has specified.
-    * [ ] Validate geometry input is in the correct format.
+* Make it easier for users to specify geometry parameters
+  * [ ] Allow them to select a point using [epsg.io's "Get position on a map" feature](https://epsg.io/map#srs=2927), which supports various SRs.
+* [ ] Add [form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#validating_forms_using_javascript) using the [Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
+  * We can't simply mark the `where` input control as required. While `where` is *usually* required for a query, but not *always*, depending on what other parameters the user has specified.
+  * [ ] Validate geometry input is in the correct format.
 
 [4326]:https://epsg.io/4326
 [2927]:https://epsg.io/2927

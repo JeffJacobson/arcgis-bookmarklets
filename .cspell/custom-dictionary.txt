@@ -2,5 +2,6 @@
 clipboardy
 epsg
 HARN
+srid
 unyielded
 WKIDs
