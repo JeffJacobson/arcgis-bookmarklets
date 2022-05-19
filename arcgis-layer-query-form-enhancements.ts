@@ -37,7 +37,7 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
   }
 
   /**
-   * 
+   * Adds suggestions for the spatial reference text boxes.
    * @param form HTML form that to which the datalist will be added
    * @param datalist Either an HTML datalist or its id value. 
    * If omitted, a new datalist will be created.
