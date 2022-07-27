@@ -1,6 +1,5 @@
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile, readdir, copyFile, open } from "fs/promises";
 import constants from "constants";
-import clipboardy from "clipboardy";
 
 const readOnlyOptions = {
     encoding: "utf-8", flag: constants.O_RDONLY
@@ -11,38 +10,60 @@ const writeOnlyOptions = {
     flag: constants.O_WRONLY
 };
 
-let contents = await readFile("arcgis-layer-query-form-enhancements.js", readOnlyOptions);
-
-// Remove the empty export statement.
-contents = contents.replace("export {};", "");
-
-// Remove newlines
-contents = contents.replace(/[\n\r]/g, "");
-contents = contents.replace(/\s{2,}/g, " ");
-
-contents = `javascript:${contents}`;
-
-const outputFilename = "output.js";
-await writeFile(outputFilename, contents);
-
 /**
  * Updates the README.md file with the bookmarklet text.
- * @param {string} bookmarkletText The bookmarklet text to add to the README.md file.
+ * @param {...string} bookmarkletText The bookmarklet text to add to the README.md file.
  */
-async function updateReadme(bookmarkletText) {
-    let readmeTemplate = await readFile("README.template.md", readOnlyOptions);
-    
-    const readme = readmeTemplate.replace("{{bookmarklets}}", `\`\`\`javascript\n${bookmarkletText}\n\`\`\``);
+async function updateReadme(...bookmarkletText) {
+    const outputFile = "README.md";
+    await copyFile("README.template.md", outputFile);
 
-    await writeFile("README.md", readme, writeOnlyOptions);
+    const fileHandle = await open(outputFile, constants.O_APPEND)
+    for (const text of bookmarkletText) {
+        await fileHandle.appendFile(text);
+    }
 }
 
-try {
-    await clipboardy.write(contents);
-    console.log("📋 Wrote content to clipboard.");
-} catch (clipboardError) {
-    console.error("⚠ Error writing to clipboard.");
+/**
+ * Gets the contents of a file.
+ * @param {string[]} fileNames
+ */
+async function* getFileContents(...fileNames) {
+    for await (const fileName of fileNames) {
+
+        let contents = await readFile(fileName, readOnlyOptions);
+
+        // Remove the empty export statement.
+        contents = contents.replace("export {};", "");
+
+        // Remove newlines
+        contents = contents.replace(/[\n\r]/g, "");
+        contents = contents.replace(/\s{2,}/g, " ");
+
+        contents = `## ${fileName}
+
+\`\`\`javascript
+javascript:${contents}
+\`\`\`
+`;
+        yield contents;
+    }
 }
+
+const jsFiles = await readdir(".", {
+    withFileTypes: true
+}).then(dirEnts => {
+    return dirEnts.filter(de => de.isFile() && de.name.endsWith(".js")).map(f => f.name);
+});
+
+/** @type {string[]} */
+const parts = [];
+
+for await (const fileText of getFileContents(...jsFiles)) {
+    parts.push(fileText);
+}
+
+const outputText = parts.join("\n");
 
 // Update the README file
-await updateReadme(contents);
+await updateReadme(outputText);

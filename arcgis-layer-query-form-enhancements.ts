@@ -1,6 +1,8 @@
-import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet } from "@esri/arcgis-rest-feature-service";
-
 // Wrap all bookmarklet code in a self-executing anonymous 
+
+import type { IQueryFeaturesResponse, ILayerDefinition } from "@esri/arcgis-rest-feature-service";
+import type { IFeatureSet, IField, IFeature } from "@esri/arcgis-rest-request";
+
 // function to avoid polluting the global scope.
 (async () => {
   const responseTableClass = "response-table";
@@ -8,7 +10,7 @@ import { IField, ILayerDefinition, IQueryFeaturesResponse, IFeature, IFeatureSet
   const helpRootUrl = "../../../../../../sdk/rest/index.html"
 
   const mapServiceHelpUrl = `${helpRootUrl}#/Query_Map_Service_Layer/02ss0000000r000000/`;
-
+ 
   let helpWindow: Window | null = null;
 
   const srMap = new Map<number, string>([

@@ -36,5 +36,4 @@ The following are ideas for enhancements that have not yet been implemented.
 1. To use, create a new bookmark in your web browser and enter the text below as its URL.
 2. Each time you visit an ArcGIS Server query page, you can click this bookmarklet to enhance it.
 
-<!-- The {{bookmarklet}} text will be replaced with the bookmarklet URL -->
-{{bookmarklets}}
+<!-- The bookmarklet URLs will be written below -->
