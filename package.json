@@ -6,7 +6,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "build": "ts-node --esm build/build.mts",
+    "build": "ts-node --esm tools/build.mts",
     "prepare": "npm run build && husky install"
   },
   "repository": {
