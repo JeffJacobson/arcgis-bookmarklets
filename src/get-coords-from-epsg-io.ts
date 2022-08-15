@@ -61,7 +61,7 @@ function getWgs84BoundingBoxCoords() {
     if (!p) {
         throw new TypeError(`No elements matching the specified selector were found.`);
     }
-    const coordsMap: { [key: string]: number[] } = {};
+    const coordsMap: Record<string, number[]> = {};
     for (const [name, value] of getCoordsFromParagraphs(...p)) {
         coordsMap[name] = value;
     }
