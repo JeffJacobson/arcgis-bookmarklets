@@ -30,43 +30,69 @@
  * ```
  */
 
+import { type EnvelopeCoordinates, createTable } from "./epsg.io/index.js";
+
 /** Matches numbers */
 const re = /-?\d+(?:\.\d+)/g;
 
 function* getCoordsFromParagraphs(...paragraphs: HTMLParagraphElement[]) {
-    for (const p of paragraphs) {
-        const caption = p.querySelector(".caption")?.textContent?.replace(/:$/, "") || null;
-        const coords = [...p.childNodes]
-            .filter((n) => n instanceof Text || n instanceof HTMLSpanElement)
-            .map((t) => {
-                const matches = t.textContent?.matchAll(re);
-                if (!matches) return null;
-                const output = new Array<RegExpMatchArray>()
-                for (const m of matches) {
-                    output.push(m);
-                }
-                return output.flat();
-            })
-            .filter((match) => !!match)
-            .map((match) => match?.map(parseFloat))
-            .flat();
-        if (coords.length && caption) {
-            yield [caption, coords] as [string, number[]];
+  for (const p of paragraphs) {
+    const caption =
+      p.querySelector(".caption")?.textContent?.replace(/:$/, "") || null;
+    const coords = [...p.childNodes]
+      .filter((n) => n instanceof Text || n instanceof HTMLSpanElement)
+      .map((t) => {
+        const matches = t.textContent?.matchAll(re);
+        if (!matches) return null;
+        const output = new Array<RegExpMatchArray>();
+        for (const m of matches) {
+          output.push(m);
         }
+        return output.flat();
+      })
+      .filter((match) => !!match)
+      .map((match) => match?.map(parseFloat))
+      .flat();
+    if (coords.length && caption) {
+      yield [caption, coords] as [string, EnvelopeCoordinates];
     }
+  }
 }
 
+/**
+ * Gets WGS 84 Bounding Box coordinates from EPSG.io page
+ * @returns A mapping of names and bounding box coordinates.
+ */
 function getWgs84BoundingBoxCoords() {
-    const p = document.body.querySelectorAll<HTMLParagraphElement>("#mini-map ~ p");
-    if (!p) {
-        throw new TypeError(`No elements matching the specified selector were found.`);
+  const p =
+    document.body.querySelectorAll<HTMLParagraphElement>("#mini-map ~ p");
+  if (!p) {
+    throw new TypeError(
+      `No elements matching the specified selector were found.`
+    );
+  }
+  const coordsMap =  new Map([...getCoordsFromParagraphs(...p)]);
+  return coordsMap;
+}
+
+function addTableToPage(coords: Map<string, EnvelopeCoordinates>) {
+    const table = createTable(coords);
+
+    console.log(`table has ${table.rows.length} rows`);
+
+    const node = document.body.querySelector("#mini-map")?.parentElement;
+
+    if (node) {
+        node.append(table);
+    } else {
+        console.warn("Couldn't find target node")
     }
-    const coordsMap: Record<string, number[]> = {};
-    for (const [name, value] of getCoordsFromParagraphs(...p)) {
-        coordsMap[name] = value;
-    }
-    return coordsMap;
+
 }
 
 const coords = getWgs84BoundingBoxCoords();
+
+addTableToPage(coords);
+
 console.log(coords);
+

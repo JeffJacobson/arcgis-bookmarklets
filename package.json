@@ -7,6 +7,7 @@
   "main": "index.js",
   "scripts": {
     "build": "ts-node --esm tools/build.mts",
+    "ghpages": "ts-node --esm tools/publish.mts",
     "prepare": "npm run build && husky install"
   },
   "repository": {
@@ -22,10 +23,11 @@
   "bugs": {
     "url": "https://github.com/JeffJacobson/arcgis-bookmarklets/issues"
   },
-  "homepage": "https://github.com/JeffJacobson/arcgis-bookmarklets#readme",
+  "homepage": "https://JeffJacobson.github.com/arcgis-bookmarklets",
   "devDependencies": {
     "@esri/arcgis-rest-feature-service": "^4.0.3",
     "@esri/arcgis-rest-request": "^4.0.3",
+    "@types/gh-pages": "^3.2.1",
     "@types/jsdom": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^5.33.0",
     "@typescript-eslint/parser": "^5.33.0",
