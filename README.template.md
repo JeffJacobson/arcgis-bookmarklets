@@ -33,6 +33,10 @@ The following are ideas for enhancements that have not yet been implemented.
 
 ## How to use
 
+1. Go to <https://jeffjacobson.github.io/arcgis-bookmarklets> and drag a link to your bookmarks toolbar
+
+Alternatively,
+
 1. To use, create a new bookmark in your web browser and enter the text below as its URL.
 2. Each time you visit an ArcGIS Server query page, you can click this bookmarklet to enhance it.
 

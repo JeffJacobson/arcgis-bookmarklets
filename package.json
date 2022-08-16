@@ -23,7 +23,7 @@
   "bugs": {
     "url": "https://github.com/JeffJacobson/arcgis-bookmarklets/issues"
   },
-  "homepage": "https://JeffJacobson.github.com/arcgis-bookmarklets",
+  "homepage": "https://jeffjacobson.github.io/arcgis-bookmarklets",
   "devDependencies": {
     "@esri/arcgis-rest-feature-service": "^4.0.3",
     "@esri/arcgis-rest-request": "^4.0.3",
@@ -31,7 +31,6 @@
     "@types/jsdom": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^5.33.0",
     "@typescript-eslint/parser": "^5.33.0",
-    "clipboardy": "^3.0.0",
     "esbuild": "^0.15.3",
     "eslint": "^8.22.0",
     "gh-pages": "^4.0.0",
