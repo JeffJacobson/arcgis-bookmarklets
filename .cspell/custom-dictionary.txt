@@ -1,6 +1,9 @@
 # Custom Dictionary Words
+arcgis
 clipboardy
+Ents
 epsg
+esbuild
 HARN
 srdatalist
 srid

@@ -8,9 +8,23 @@
 				"kind": "build",
 				"isDefault": true
 			},
-			"problemMatcher": ["$tsc"],
+			"problemMatcher": [],
 			"label": "npm: build",
-			"detail": "tsc && node build/build.mjs"
+			"detail": "ts-node --esm build/build.mts"
+		},
+		{
+			"type": "npm",
+			"script": "ghpages",
+			"problemMatcher": [],
+			"label": "npm: ghpages",
+			"detail": "ts-node --esm tools/publish.mts"
+		},
+		{
+			"label": "Serve HTML",
+			"detail": "Serves the contents of the dist directory.",
+			"type": "shell",
+			"command": "dotnet serve -o --directory dist",
+			"problemMatcher": []
 		}
 	]
 }
