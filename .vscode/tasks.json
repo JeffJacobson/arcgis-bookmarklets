@@ -2,29 +2,42 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Build bookmarklets",
+			"detail": "Transpiles TS files into bookmarkets then adds them to README.md and dist/index.html",
 			"type": "npm",
 			"script": "build",
+			"icon": {
+				"id": "bookmark"
+			},
 			"group": {
 				"kind": "build",
 				"isDefault": true
 			},
-			"problemMatcher": [],
-			"label": "npm: build",
-			"detail": "ts-node --esm build/build.mts"
+			"problemMatcher": []
 		},
 		{
+			"label": "Publish to GitHub pages",
+			"detail": "Publish contents of dist to GitHub pages site",
 			"type": "npm",
 			"script": "ghpages",
-			"problemMatcher": [],
-			"label": "npm: ghpages",
-			"detail": "ts-node --esm tools/publish.mts"
+			"icon": {
+				"id": "github"
+			},
+			"problemMatcher": []
 		},
 		{
 			"label": "Serve HTML",
-			"detail": "Serves the contents of the dist directory.",
+			"detail": "Serves the contents of the dist directory using dotnet-serve.",
 			"type": "shell",
-			"command": "dotnet-serve",
+			"icon": {
+				"id": "browser",
+				"color": "terminal.ansiCyan"
+			},
+			"command": "dotnet",
 			"args": [
+				"tool",
+				"run",
+				"dotnet-serve",
 				"--open-browser",
 				"--quiet",
 				"--gzip",
