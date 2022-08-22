@@ -1,6 +1,8 @@
 /**
  * Extracts coordinate information from an epsg.io page.
- * @example Sample DOM elements that this code parses.
+ */
+
+ /* @example Sample DOM elements that this code parses.
  * ```html
  * <div class="col3 minimap-pad">
  *     <div id="mini-map" class=" center-mobile">
@@ -30,7 +32,7 @@
  * ```
  */
 
-import { type EnvelopeCoordinates, createTable } from "./epsg.io/index.js";
+import { type EnvelopeCoordinates, createTable } from "./modules/epsg.io/index.js";
 
 /** Matches numbers */
 const re = /-?\d+(?:\.\d+)/g;

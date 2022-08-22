@@ -4,9 +4,15 @@ clipboardy
 Ents
 epsg
 esbuild
+ghpages
 HARN
 srdatalist
 srid
+tsdoc
 unyielded
 WKID
 WKIDs
+xmax
+xmin
+ymax
+ymin
