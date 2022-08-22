@@ -23,7 +23,15 @@
 			"label": "Serve HTML",
 			"detail": "Serves the contents of the dist directory.",
 			"type": "shell",
-			"command": "dotnet serve -o --directory dist",
+			"command": "dotnet-serve",
+			"args": [
+				"--open-browser",
+				"--quiet",
+				"--gzip",
+				"--brotli",
+				"--cors",
+				"--directory=dist",
+			],
 			"problemMatcher": []
 		}
 	]
