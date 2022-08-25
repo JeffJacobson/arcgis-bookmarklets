@@ -1,17 +1,13 @@
-import {
-  IFeature,
-  IFeatureSet,
-  IField,
-  ILayerDefinition,
-  IQueryFeaturesResponse,
-} from "@esri/arcgis-rest-feature-service";
+import { IField, ILayerDefinition } from "@esri/arcgis-rest-feature-service";
+import { modifyFormHandling } from "./formSubmitUtils.js";
+import { createHelpLinks } from "./helpUtils.js";
 
 const srMap = new Map<number, string>([
   [2927, "NAD83(HARN) / Washington South (ftUS)"],
-  [4326, "WGS 84 – WGS84 - World Geodetic System 1984, used in GPS"],
+  [4326, "WGS 84 - WGS84 - World Geodetic System 1984, used in GPS"],
   [
     3857,
-    "WGS 84 / Pseudo-Mercator – Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI",
+    "WGS 84 / Pseudo-Mercator - Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI",
   ],
 ]);
 
@@ -61,228 +57,6 @@ export function addDataListToSRTextElements(
   }
 }
 
-const helpRootUrl = "../../../../../../sdk/rest/index.html";
-
-const mapServiceHelpUrl = `${helpRootUrl}#/Query_Map_Service_Layer/02ss0000000r000000/`;
-
-let helpWindow: Window | null = null;
-
-/**
- *
- * @param node The HTML Window that will be scrolled.
- * @param paramName The name of the ArcGIS query
- * parameter to scroll to in the documentation.
- */
-function scrollToSpan(node: ParentNode, paramName: string) {
-  // Get the spans containing parameter names and filter
-  // to only the one with the desired parameter name.
-  console.group(`scroll to span with ${paramName}`);
-  try {
-    const spanList = node.querySelectorAll("td:first-child>span.usertext");
-    console.debug("matching spans", spanList);
-    const spans = Array.from(spanList).filter(
-      (e) => e.textContent === paramName
-    );
-    console.debug(`matching spans with ${paramName}`, spans);
-    if (spans.length > 0) {
-      // Get the parent element (table cell) of
-      // the span with the parameter name.
-      // Scroll to this element.
-      spans[0].parentElement?.scrollIntoView();
-    }
-  } catch (error) {
-    console.error(error);
-    throw error;
-  } finally {
-    console.groupEnd();
-  }
-}
-
-/**
- * Opens a help window for a query parameter.
- * @param this The <a> that was clicked.
- * * The href will be a help page on the same server.
- * * The dataset of the a element should contain a "param" (a "data-param" attribute).
- * @param ev The click event. This function currently does not make use of this parameter.
- */
-function getHelpForParam(this: HTMLAnchorElement, ev: Event) {
-  console.group("get help for param");
-  try {
-    const paramName = this.dataset.param;
-    if (paramName) {
-      // Scroll to the given parameter's documentation in the help window.
-      // Open a new help window if necessary.
-      if (!helpWindow || helpWindow.closed) {
-        helpWindow = open(this.href, this.target);
-
-        // All of the content is not in the page when loaded.
-        // Wait for 1 second before attempting to scroll.
-        // (An alternative approach would be to use a MutationObserver.)
-        helpWindow?.addEventListener(
-          "load",
-          function (this, ev) {
-            this.setTimeout(() => scrollToSpan(this.document, paramName), 1000);
-          },
-          { passive: true, capture: false }
-        );
-      } else {
-        // The window already exists, so we can scroll without waiting.
-        scrollToSpan(helpWindow.document, paramName);
-        // Switch to the help window.
-        helpWindow.focus();
-      }
-      // Stop the default behavior of clicking a link.
-      ev.preventDefault();
-    } else {
-      console.warn("could not access paramName");
-    }
-  } catch (error) {
-    console.error(error);
-    throw error;
-  } finally {
-    console.groupEnd();
-  }
-}
-
-/**
- * Creates help links for labels for query parameter inputs.
- * @param form A form
- */
-export function createHelpLinks(form: HTMLFormElement) {
-  const labels = form.querySelectorAll<HTMLLabelElement>("label[for]");
-  const helpText = "❓";
-
-  function addEventHandler(label: HTMLElement) {
-    const paramName =
-      (label as HTMLLabelElement).htmlFor || label.dataset.htmlFor;
-    const a = document.createElement("a");
-    a.href = mapServiceHelpUrl;
-    a.target = "help";
-    a.dataset.param = paramName;
-    a.text = helpText;
-    label.append(a);
-    a.addEventListener("click", getHelpForParam);
-  }
-
-  // TODO: Radio buttons currently aren't supported by this function, as
-  // they do not have labels with "for" attributes.
-
-  // Get the radio buttons that have a name element and are contained in a label
-  // that is the first child.
-  const selector = "td>label:first-child>input[type=radio][name]";
-  // Get the labels that will have a help link added to them.
-  const elements = Array.from(
-    form.querySelectorAll<HTMLInputElement>(selector),
-    (rb) => {
-      const name = rb.name;
-      const cell = rb.parentElement?.parentElement
-        ?.previousElementSibling as HTMLElement;
-      cell.dataset.htmlFor = name;
-      return cell;
-    }
-  );
-
-  for (const label of elements) {
-    addEventHandler(label);
-  }
-
-  labels.forEach(addEventHandler);
-}
-
-function getFieldByName(featureSet: IFeatureSet, fieldName: string): IField {
-  if (!featureSet.fields) {
-    throw new TypeError("Feature set does not contain a 'fields' property.");
-  }
-  return featureSet.fields.filter((f) => f.name === fieldName)[0];
-}
-
-export const responseTableClass = "response-table";
-/**
- * Enumerates through the fields of a feature set, yielding
- * the objectIdFieldName, globalFieldName, and displayFieldName
- * before the rest of the fields.
- * @param featureSet A feature set
- * @param specialFieldNameProperties Specifies the names of properties of featureSet
- * that denote special fields that should be yielded before the other fields.
- */
-function* enumerateFields(
-  featureSet: IFeatureSet,
-  specialFieldNameProperties = [
-    "objectIdFieldName",
-    "globalIdFieldName",
-    "displayFieldName",
-  ]
-) {
-  const fieldsToSkip = new Array<string>();
-  // Yield the "special" fields first.
-  for (const propertyName of specialFieldNameProperties) {
-    if (!(propertyName in featureSet)) continue;
-    const fieldName = (featureSet as any)[propertyName];
-    if (fieldName) {
-      const field = getFieldByName(featureSet, fieldName);
-      fieldsToSkip.push(field.name);
-      yield field;
-    }
-  }
-
-  const orderedFieldNames = Array.of(...fieldsToSkip);
-
-  // Yield the rest
-  const unyieldedFields =
-    featureSet.fields?.filter((f) => !(f.name in fieldsToSkip)) || [];
-  for (const field of unyieldedFields) {
-    orderedFieldNames.push(field.name);
-    yield field;
-  }
-  return orderedFieldNames;
-}
-
-function createTableHeading(field: IField) {
-  const th = document.createElement("th");
-  th.scope = "col";
-  if (typeof field === "string") {
-    th.textContent = field;
-    th.dataset.fieldName = field;
-  } else {
-    th.textContent = field.alias || field.name;
-    th.dataset.fieldName = field.name;
-  }
-  return th;
-}
-
-function createTableCell(
-  feature: IFeature,
-  field: IField
-): HTMLTableCellElement {
-  const cell = document.createElement("td");
-  cell.textContent = feature.attributes[field.name];
-  return cell;
-}
-
-export function createTable(queryResponse: IQueryFeaturesResponse) {
-  const table = document.createElement("table");
-  const frag = document.createDocumentFragment();
-  frag.append(table);
-  table.classList.add(responseTableClass);
-  const thead = table.createTHead();
-  const theadRow = thead.insertRow();
-  // Get an array of fields.
-  const fields = Array.from(enumerateFields(queryResponse));
-  // Append th elements for each field.
-  theadRow.append(...fields.map(createTableHeading));
-
-  const tbody = table.createTBody();
-  for (const feature of queryResponse.features) {
-    const row = tbody.insertRow();
-    for (const field of fields) {
-      const cell = createTableCell(feature, field);
-      row.appendChild(cell);
-    }
-  }
-
-  return frag;
-}
-
 /**
  * Uses the History API to clean up the URL currently displayed in the browser
  * by removing all of the parameters that are set to an empty string.
@@ -293,11 +67,9 @@ function removeEmptyParametersFromUrl(this: HTMLAnchorElement, e: Event) {
   // Get the current URL.
   let url = new URL(location.href);
   // Get the names of params that are not empty or otherwise should not be removed.
-  const params = Array.from(url.searchParams.entries()).filter(
-    ([key, value]) => {
-      return value !== "" && value !== "false" && value !== "esriDefault";
-    }
-  );
+  const params = Array.from(url.searchParams.entries()).filter(([, value]) => {
+    return value !== "" && value !== "false" && value !== "esriDefault";
+  });
 
   // Create a new URLSearchParams object and
   // populate with only the filtered list
@@ -469,102 +241,6 @@ export function setPlaceholderForWhere(form: HTMLFormElement) {
 //     yield attributeName;
 //   }
 // }
-
-/**
- * Modifies what an ArcGIS query form does when a user submits it.
- * @param form - A form on an ArcGIS query page.
- */
-export function modifyFormHandling(form: HTMLFormElement) {
-  function addResetButton() {
-    let resetButton = form.querySelector<HTMLButtonElement | HTMLInputElement>(
-      "button[type=reset],input[type=reset]"
-    );
-    if (!resetButton) {
-      resetButton = document.createElement("button");
-      resetButton.type = "reset";
-      resetButton.innerText = "Reset";
-      form
-        .querySelector("[type=submit]")
-        ?.parentElement?.appendChild(resetButton);
-    }
-  }
-
-  addResetButton();
-
-  form.addEventListener("submit", function (this, ev) {
-    // Determine which form submit button the user clicked (GET or POST).
-    const submitButton = ev.submitter;
-    const methodRe = /(?:(?:GET)|(?:POST))/gi;
-    const methodMatch = submitButton?.getAttribute("value")?.match(methodRe);
-    // Set the form method to match the button that was clicked.
-    // If the method isn't "GET" or "POST" (a situation which shouldn't occur)
-    // Set the method to an empty string.
-    this.method = methodMatch ? methodMatch[0].toLowerCase() : "";
-    // Change the form target so the query opens in a new window.
-    this.target = "_blank";
-
-    // // for GET requests, clean up the URL and open this URL rather than the default form submit behavior.
-
-    // const format = (this.f as HTMLSelectElement).value;
-    // if (format !== "html" || this.method !== "get") {
-    //   return;
-    // }
-
-    // // Get all named elements with values and
-    // // create a mapping of the controls' name/values.
-
-    // const queryParameters = new URLSearchParams(
-    //   Array.from(
-    //     this.querySelectorAll<HTMLInputElement>("input[type=radio][checked],input:not([type=radio]),textarea"))
-    //     .filter(input => input.name && input.value !== "")
-    //     .map(input => [input.name, input.value])
-    // );
-
-    // // User has specified HTML output, but we need to get JSON and then we'll
-    // // generate HTML ourselves.
-    // queryParameters.set("f", "json");
-
-    // // Create a new URL
-    // const url = new URL(location.href.split("?")[0]);
-    // // Add the parameters to the URL.
-    // url.search = queryParameters.toString();
-
-    // fetch(url.href).then(async (response) => {
-    //   const queryResponse: IQueryFeaturesResponse = await response.json();
-    //   try {
-    //     const tableFrag = createTable(queryResponse);
-    //     const selector = `table.${responseTableClass}`;
-    //     // Remove existing result tables if they exist.
-    //     document.body.querySelectorAll(selector).forEach(element => { element.remove() });
-    //     document.body.append(tableFrag);
-    //     document.body.querySelector(selector)?.scrollIntoView();
-    //     // Update the URL
-    //   } catch (error) {
-    //     if (error instanceof DOMException) {
-    //       console.error("An error occurred creating the table", error);
-    //     } else {
-    //       throw error;
-    //     }
-    //   }
-    //   try {
-    //     // Set "f" back to "html" before pushing history state.
-    //     url.searchParams.set("f", "html");
-    //     history.pushState({ url: url.href, response: queryResponse }, "", url);
-    //   } catch (error) {
-    //     if (error instanceof DOMException) {
-    //       console.error("Error pushing history state", error);
-    //     } else {
-    //       throw error;
-    //     }
-    //   }
-    // }, error => {
-    //   alert("An error was encountered. See console for details.");
-    //   console.error(error);
-    // });
-
-    // ev.preventDefault();
-  });
-}
 
 /**
  * Enhances the "time" control.
