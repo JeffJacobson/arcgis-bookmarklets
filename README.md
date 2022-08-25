@@ -70,7 +70,7 @@ javascript:(()=>{function p(n){function e(){let t=n.querySelector("button[type=r
 
 Enhances the ELC REST SOE query page.
 ```javascript
-javascript:(()=>{function c(e){if(e||(e=document.querySelector("form[action*='exts/ELC'i]")||void 0),!e)return;let r=e.querySelectorAll("tr > td:nth-child(2) > textarea:first-child");for(let t of r)if(t.id.match(/Date$/i)){let n=document.createElement("input");n.type="date",n.name=t.name,n.id=t.id,t.replaceWith(n)}}c();})();
+javascript:(()=>{function a(t,e,...n){for(let r of n)Object.prototype.hasOwnProperty.call(t,r)&&(e[r]=t[r])}function i(t){let e=document.createElement("input");return a(t,e,"name","id"),e.pattern=/\d{2}-\d{2}-\d{4}/.source,e.placeholder=`Either "Current" or, e.g., ${new Date().getFullYear}`,t.replaceWith(e),e}function c(t){let e=document.createElement("input");return e.type="date",a(t,e,"name","id"),t.replaceWith(e),e}function o(t){if(t||(t=document.querySelector("form[action*='exts/ELC'i]")||void 0),!t)return;let e=t.querySelectorAll("tr > td:nth-child(2) > textarea:first-child");for(let n of e)/Date$/i.test(n.id)?c(n):/^lrsYear$/i.test(n.id)&&i(n)}o();})();
 ```
 
 ## get-coords-from-epsg-io
